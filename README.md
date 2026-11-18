@@ -11,6 +11,7 @@ Default recipient: `uzairkamal@yahoo.com` (change it with `DEFAULT_TO` in `.env`
 - **Photo editor** (tap a photo): crop (free, A4, square, or full photo), rotate left/right, flip, brightness and contrast, and B&W or **Document** looks that make paperwork crisp and easy to read. Edits are applied to the original photo, so you can reopen and change them without losing quality. Reset undoes everything.
 - Send as one multi-page **PDF** (one photo per A4 page) or as separate **JPEG** attachments
 - Editable To, Subject and Message
+- Styled with the KamTech Solutions brand, the same as Fill & Sign (pdf.kamtechsolutions.eu): Indigo Edge colours, Sora and Manrope fonts, KamTech logo and icons. Light and dark themes follow your device setting, with a switch in the header.
 - Test mode: if SMTP isn't set up, emails are logged instead of sent
 
 ## Setup (Gmail)

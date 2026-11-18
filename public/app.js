@@ -176,3 +176,14 @@
 
   startCamera();
 })();
+
+/* ---------- Theme toggle and footer year ---------- */
+(() => {
+  document.getElementById('yr').textContent = new Date().getFullYear();
+  document.getElementById('theme').addEventListener('click', () => {
+    const root = document.documentElement;
+    const dark = root.dataset.theme ? root.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+    root.dataset.theme = dark ? 'light' : 'dark';
+    try { localStorage.setItem('im-theme', root.dataset.theme); } catch (e) {}
+  });
+})();
