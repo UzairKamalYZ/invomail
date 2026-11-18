@@ -88,6 +88,7 @@ function stamp() {
 
 const app = express();
 app.use(express.static(path.join(__dirname, 'public')));
+app.use('/vendor/cropperjs', express.static(path.join(__dirname, 'node_modules/cropperjs/dist')));
 
 app.get('/api/config', (_req, res) => {
   res.json({ defaultTo: DEFAULT_TO, dryRun: DRY_RUN });

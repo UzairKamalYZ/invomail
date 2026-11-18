@@ -85,3 +85,43 @@ textarea { resize: vertical; }
 .status { min-height: 1.5em; margin: 8px 0 0; font-size: .95rem; }
 .status.ok { color: var(--ok); }
 .status.err { color: var(--err); }
+
+/* ---------- Thumbnails / hint ---------- */
+.thumb img { cursor: pointer; }
+.thumb .edited {
+  position: absolute; left: 4px; bottom: 4px;
+  font-size: .7rem; padding: 1px 6px; border-radius: 6px;
+  background: rgba(0,0,0,.65); color: #fff;
+}
+.hint { margin: 8px 0 0; font-size: .85rem; color: var(--muted); }
+
+/* ---------- Photo editor ---------- */
+.editor {
+  position: fixed; inset: 0; z-index: 10;
+  display: flex; flex-direction: column;
+  background: #0d0f12; color: #e8eaed;
+}
+.editor[hidden] { display: none; }
+.editor-top {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 12px; gap: 8px;
+}
+.editor-top button:not(.primary) { background: transparent; color: #e8eaed; border-color: #3a3f47; }
+.editor-title { font-weight: 600; }
+.editor-stage { flex: 1; min-height: 0; padding: 0 12px; }
+.stage-inner { width: 100%; height: 100%; }
+.editor-stage img { display: block; max-width: 100%; }
+.editor-tools {
+  padding: 10px 12px calc(12px + env(safe-area-inset-bottom));
+  max-width: 560px; width: 100%; margin: 0 auto;
+}
+.tool-row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-bottom: 8px; }
+.editor-tools button {
+  background: #1f232a; color: #e8eaed; border-color: #3a3f47;
+  padding: 7px 11px; font-size: .9rem;
+}
+.chips button.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+.tool-label { width: 44px; font-size: .8rem; color: #9aa0a6; }
+.slider { display: flex; align-items: center; gap: 10px; margin: 0 0 6px; color: #9aa0a6; font-size: .85rem; }
+.slider input { flex: 1; accent-color: var(--accent); }
+.editor .cropper-container img { filter: var(--ed-filter, none); }

@@ -13,8 +13,10 @@
   const sendBtn = document.getElementById('sendBtn');
   const statusEl = document.getElementById('status');
   const toInput = document.getElementById('to');
+  const editHint = document.getElementById('editHint');
 
-  const photos = []; // { blob, url }
+  // original: photo as taken; blob: what gets sent (edited or original); state: editor settings
+  const photos = []; // { original, blob, url, state }
   let stream = null;
   let facingMode = 'environment';
 
@@ -75,7 +77,7 @@
       setStatus(`You can attach up to ${MAX_PHOTOS} photos.`, 'err');
       return;
     }
-    photos.push({ blob, url: URL.createObjectURL(blob) });
+    photos.push({ original: blob, blob, url: URL.createObjectURL(blob), state: null });
     renderThumbs();
   }
 
@@ -86,7 +88,9 @@
       wrap.className = 'thumb';
       const img = document.createElement('img');
       img.src = p.url;
-      img.alt = `Photo ${i + 1}`;
+      img.alt = `Photo ${i + 1} (tap to edit)`;
+      img.title = 'Tap to crop or edit';
+      img.onclick = () => editPhoto(p);
       const del = document.createElement('button');
       del.type = 'button';
       del.textContent = '×';
@@ -97,9 +101,26 @@
         renderThumbs();
       };
       wrap.append(img, del);
+      if (p.state) {
+        const tag = document.createElement('span');
+        tag.className = 'edited';
+        tag.textContent = 'Edited';
+        wrap.append(tag);
+      }
       thumbs.append(wrap);
     });
     sendBtn.disabled = photos.length === 0;
+    editHint.hidden = photos.length === 0;
+  }
+
+  async function editPhoto(p) {
+    const result = await PhotoEditor.open(p.original, p.state);
+    if (!result) return;
+    URL.revokeObjectURL(p.url);
+    p.blob = result.blob;
+    p.state = result.state;
+    p.url = URL.createObjectURL(result.blob);
+    renderThumbs();
   }
 
   captureBtn.addEventListener('click', async () => {

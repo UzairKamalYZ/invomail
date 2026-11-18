@@ -4,6 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>InvoMail</title>
+  <link rel="stylesheet" href="vendor/cropperjs/cropper.min.css" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -27,6 +28,7 @@
         </label>
       </div>
       <div id="thumbs" class="thumbs"></div>
+      <p id="editHint" class="hint" hidden>Tap a photo to crop, rotate or adjust it.</p>
     </section>
 
     <form id="mailForm" class="card">
@@ -48,7 +50,41 @@
       <p id="status" class="status" role="status"></p>
     </form>
   </main>
+  <div id="editor" class="editor" role="dialog" aria-modal="true" aria-label="Edit photo" hidden>
+    <div class="editor-top">
+      <button id="edCancel" type="button">Cancel</button>
+      <span class="editor-title">Edit photo</span>
+      <button id="edSave" class="primary" type="button">Done</button>
+    </div>
+    <div class="editor-stage"><div class="stage-inner"><img id="edImg" alt="Photo being edited" /></div></div>
+    <div class="editor-tools">
+      <div class="tool-row">
+        <button type="button" data-rotate="-90" title="Rotate left">⟲ Left</button>
+        <button type="button" data-rotate="90" title="Rotate right">⟳ Right</button>
+        <button type="button" id="edFlip" title="Flip horizontally">⇋ Flip</button>
+        <button type="button" id="edReset">Reset</button>
+      </div>
+      <div class="tool-row chips" id="edAspect">
+        <span class="tool-label">Crop</span>
+        <button type="button" data-aspect="free" class="on">Free</button>
+        <button type="button" data-aspect="a4">A4</button>
+        <button type="button" data-aspect="1">Square</button>
+        <button type="button" data-aspect="full">Full photo</button>
+      </div>
+      <div class="tool-row chips" id="edFilter">
+        <span class="tool-label">Look</span>
+        <button type="button" data-filter="none" class="on">Original</button>
+        <button type="button" data-filter="gray">B&amp;W</button>
+        <button type="button" data-filter="doc">Document</button>
+      </div>
+      <label class="slider">Brightness <input id="edBright" type="range" min="50" max="150" value="100" /></label>
+      <label class="slider">Contrast <input id="edContrast" type="range" min="50" max="200" value="100" /></label>
+    </div>
+  </div>
+
   <canvas id="canvas" hidden></canvas>
+  <script src="vendor/cropperjs/cropper.min.js"></script>
+  <script src="editor.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

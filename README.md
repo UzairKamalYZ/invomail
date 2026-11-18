@@ -8,6 +8,7 @@ Default recipient: `uzairkamal@yahoo.com` (change it with `DEFAULT_TO` in `.env`
 - Live camera preview with **Take photo** and **Switch camera** (front/back on phones)
 - **Upload** button: opens the phone camera or picks existing photos (also the fallback when live camera is blocked)
 - Several photos per email (up to 10); remove any before sending
+- **Photo editor** (tap a photo): crop (free, A4, square, or full photo), rotate left/right, flip, brightness and contrast, and B&W or **Document** looks that make paperwork crisp and easy to read. Edits are applied to the original photo, so you can reopen and change them without losing quality. Reset undoes everything.
 - Send as one multi-page **PDF** (one photo per A4 page) or as separate **JPEG** attachments
 - Editable To, Subject and Message
 - Test mode: if SMTP isn't set up, emails are logged instead of sent
