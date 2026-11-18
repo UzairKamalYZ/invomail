@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>InvoMail</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="app">
+    <header>
+      <h1>InvoMail</h1>
+      <p class="sub">Snap a photo and email it as a PDF or image.</p>
+    </header>
+
+    <section class="card">
+      <div class="viewer">
+        <video id="video" autoplay playsinline muted></video>
+        <div id="cameraMsg" class="camera-msg" hidden></div>
+      </div>
+      <div class="row">
+        <button id="captureBtn" class="primary" type="button">Take photo</button>
+        <button id="switchBtn" type="button" title="Switch camera">Switch camera</button>
+        <label class="button">
+          Upload
+          <input id="fileInput" type="file" accept="image/*" capture="environment" multiple hidden />
+        </label>
+      </div>
+      <div id="thumbs" class="thumbs"></div>
+    </section>
+
+    <form id="mailForm" class="card">
+      <label>To
+        <input id="to" name="to" type="email" required />
+      </label>
+      <label>Subject
+        <input id="subject" name="subject" type="text" value="Photo from InvoMail" maxlength="200" />
+      </label>
+      <label>Message
+        <textarea id="body" name="body" rows="5" placeholder="Write the email body here…"></textarea>
+      </label>
+      <fieldset class="format">
+        <legend>Send as</legend>
+        <label><input type="radio" name="format" value="pdf" checked /> PDF</label>
+        <label><input type="radio" name="format" value="image" /> Image (JPEG)</label>
+      </fieldset>
+      <button id="sendBtn" class="primary wide" type="submit" disabled>Send email</button>
+      <p id="status" class="status" role="status"></p>
+    </form>
+  </main>
+  <canvas id="canvas" hidden></canvas>
+  <script src="app.js"></script>
+</body>
+</html>
