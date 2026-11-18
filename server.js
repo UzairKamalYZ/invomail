@@ -8,7 +8,20 @@ const PDFDocument = require('pdfkit');
 
 const PORT = Number(process.env.PORT) || 3000;
 const DEFAULT_TO = process.env.DEFAULT_TO || 'uzairkamal@yahoo.com';
-const DRY_RUN = String(process.env.DRY_RUN).toLowerCase() === 'true' || !process.env.SMTP_HOST;
+// Gmail shortcut: GMAIL_USER + GMAIL_APP_PASSWORD fill in the SMTP settings.
+const GMAIL_USER = (process.env.GMAIL_USER || '').trim();
+const GMAIL_PASS = (process.env.GMAIL_APP_PASSWORD || '').replace(/\s+/g, ''); // Google shows it in groups of 4
+const SMTP = GMAIL_USER
+  ? { host: 'smtp.gmail.com', port: 465, secure: true, user: GMAIL_USER, pass: GMAIL_PASS }
+  : {
+      host: process.env.SMTP_HOST,
+      port: Number(process.env.SMTP_PORT) || 465,
+      secure: String(process.env.SMTP_SECURE ?? 'true').toLowerCase() === 'true',
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
+    };
+const MAIL_FROM = process.env.MAIL_FROM || (SMTP.user ? `InvoMail <${SMTP.user}>` : 'invomail@localhost');
+const DRY_RUN = String(process.env.DRY_RUN).toLowerCase() === 'true' || !SMTP.host;
 const MAX_PHOTOS = 10;
 
 const EMAIL_RE = /^[^\s@,;]+@[^\s@,;]+\.[^\s@,;]+$/;
@@ -25,11 +38,24 @@ const upload = multer({
 const transporter = DRY_RUN
   ? nodemailer.createTransport({ jsonTransport: true })
   : nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: Number(process.env.SMTP_PORT) || 465,
-      secure: String(process.env.SMTP_SECURE ?? 'true').toLowerCase() === 'true',
-      auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+      host: SMTP.host,
+      port: SMTP.port,
+      secure: SMTP.secure,
+      auth: { user: SMTP.user, pass: SMTP.pass },
     });
+
+/** Turn common SMTP failures into a message a person can act on. */
+function explainMailError(err) {
+  if (err.code === 'EAUTH' || err.responseCode === 535) {
+    return SMTP.host === 'smtp.gmail.com'
+      ? 'Gmail rejected the login. Check GMAIL_USER and use a 16-character App Password (not your normal password); 2-Step Verification must be on.'
+      : 'The email server rejected the login. Check the SMTP username and password.';
+  }
+  if (['ECONNECTION', 'ETIMEDOUT', 'ESOCKET', 'EDNS'].includes(err.code)) {
+    return `Could not reach the email server (${SMTP.host}). Check the internet connection.`;
+  }
+  return `Could not send email: ${err.message}`;
+}
 
 /** Build a PDF with one photo per A4 page, scaled to fit. */
 function imagesToPdf(files) {
@@ -92,7 +118,7 @@ app.post('/api/send', upload.array('photos', MAX_PHOTOS), async (req, res) => {
     }
 
     const info = await transporter.sendMail({
-      from: process.env.MAIL_FROM || process.env.SMTP_USER || 'invomail@localhost',
+      from: MAIL_FROM,
       to,
       subject,
       text: body || 'Please find the attached photo(s).',
@@ -113,7 +139,7 @@ app.post('/api/send', upload.array('photos', MAX_PHOTOS), async (req, res) => {
     });
   } catch (err) {
     console.error('Send failed:', err);
-    res.status(500).json({ error: `Could not send email: ${err.message}` });
+    res.status(500).json({ error: explainMailError(err) });
   }
 });
 
@@ -124,5 +150,12 @@ app.use((err, _req, res, _next) => {
 
 app.listen(PORT, () => {
   console.log(`InvoMail running at http://localhost:${PORT}`);
-  if (DRY_RUN) console.log('DRY RUN mode: emails are logged, not sent. Configure SMTP_* in .env to send for real.');
+  if (DRY_RUN) {
+    console.log('TEST MODE: emails are logged, not sent. Set GMAIL_USER and GMAIL_APP_PASSWORD in .env to send for real.');
+    return;
+  }
+  transporter
+    .verify()
+    .then(() => console.log(`Email login OK: sending from ${SMTP.user} via ${SMTP.host}`))
+    .catch((err) => console.error(`Email login FAILED: ${explainMailError(err)}`));
 });

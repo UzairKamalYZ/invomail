@@ -12,23 +12,36 @@ Default recipient: `uzairkamal@yahoo.com` (change it with `DEFAULT_TO` in `.env`
 - Editable To, Subject and Message
 - Test mode: if SMTP isn't set up, emails are logged instead of sent
 
-## Setup
+## Setup (Gmail)
+
+### 1. Create a Gmail App Password
+Gmail does not let apps use your normal password. You create a separate **App Password** instead:
+1. Sign in to the Gmail account you want to send **from**.
+2. Turn on **2-Step Verification**: https://myaccount.google.com/signinoptions/twosv
+3. Open https://myaccount.google.com/apppasswords, type a name such as `InvoMail`, and click **Create**.
+4. Copy the 16-character password Google shows (e.g. `abcd efgh ijkl mnop`). You only see it once.
+
+### 2. Configure and start the app
 ```bash
 npm install
-cp .env.example .env   # then fill in your SMTP details
-npm start              # opens on http://localhost:3000
+cp .env.example .env
 ```
+Edit `.env`:
+```
+GMAIL_USER=yourname@gmail.com
+GMAIL_APP_PASSWORD=abcd efgh ijkl mnop
+DEFAULT_TO=uzairkamal@yahoo.com
+```
+Then:
+```bash
+npm start      # opens on http://localhost:3000
+```
+On startup the terminal shows either `Email login OK` or `Email login FAILED` with the reason, so you know right away whether Gmail accepted the password.
 
-### SMTP settings
-The app sends through any SMTP account. Most providers need an **app password**, not your normal password:
+Keep `.env` private. It is in `.gitignore` so it is never committed.
 
-| Provider | SMTP_HOST | SMTP_PORT | SMTP_SECURE |
-|---|---|---|---|
-| Gmail (App Password) | smtp.gmail.com | 465 | true |
-| Yahoo (App Password) | smtp.mail.yahoo.com | 465 | true |
-| Outlook / Microsoft 365 | smtp.office365.com | 587 | false |
-
-Set `MAIL_FROM` to the same address as `SMTP_USER`, otherwise many providers reject the message.
+### Other providers
+Leave `GMAIL_USER` empty and fill in the `SMTP_*` lines in `.env` instead (e.g. Yahoo: `smtp.mail.yahoo.com`, port 465; Outlook: `smtp.office365.com`, port 587, `SMTP_SECURE=false`).
 
 ## Using it on a phone
 Browsers only allow the live camera on **HTTPS** or `localhost`. On a phone, either:
