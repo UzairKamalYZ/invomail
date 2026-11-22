@@ -1,0 +1,21 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "invomail",
+  "main": "src/worker.js",
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": ["nodejs_compat"],
+
+  // The app itself: plain files served by Cloudflare. Only /api/* runs the Worker code.
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "run_worker_first": ["/api/*"]
+  },
+
+  // Settings (MAIL_TO, GMAIL_USER, GMAIL_APP_PASSWORD, ...) live in the Cloudflare
+  // dashboard: Worker → Settings → Variables and Secrets. keep_vars stops a deploy
+  // from wiping them.
+  "keep_vars": true,
+
+  "observability": { "enabled": true }
+}

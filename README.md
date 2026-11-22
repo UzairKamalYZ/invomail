@@ -1,60 +1,58 @@
 # InvoMail
 
-A personal one-button app: take a photo of an invoice (or upload one) and press **Send email**. It goes to one fixed address with a pre-written subject and message, attached as a PDF.
+A personal one-button app: take a photo of an invoice (or upload one) and press **Send email**. It goes to one fixed address, with a pre-written subject and message, as a PDF.
+
+There is no server to run. The app is plain files, and everything happens in the browser, including building the PDF. A tiny [Cloudflare Worker](https://developers.cloudflare.com/workers/) (`src/worker.js`) serves those files and does the one thing a browser can't do safely: hand the PDF to Gmail using your password, which stays in the Worker's settings and never reaches the browser.
 
 ## Features
-- Live camera preview with **Take photo** and **Switch** (front/back camera on phones)
-- **Upload** button: opens the phone camera or picks existing photos (also the fallback when the live camera is blocked)
-- Several photos per email (up to 10), sent as one multi-page **PDF** (one photo per A4 page) or as separate JPEGs
-- **Photo editor** (tap a photo, optional): crop (free, A4, square, or full photo), rotate, flip, brightness and contrast, and B&W or **Document** looks that make paperwork crisp. Edits are applied to the original photo, so you can reopen and change them without losing quality.
-- **Fixed recipient, subject and message**, set once in `.env`. The screen shows them but has nothing to type. The server ignores anything else the browser sends, so the app can only ever email that one address.
-- Styled with the KamTech Solutions brand, the same as Fill & Sign (pdf.kamtechsolutions.eu). Light and dark themes follow your device, with a switch in the header.
-- Test mode: if no email account is set up, emails are logged instead of sent
+- Live camera preview with **Take photo** and **Switch** (front/back camera), plus **Upload** for existing photos or the phone's camera app
+- Several photos per email (up to 10), combined into one PDF in the browser (one photo per A4 page, portrait or landscape to fit)
+- **Photo editor** (tap a photo, optional): crop (free, A4, square, full photo), rotate, flip, brightness, contrast, and B&W or **Document** looks
+- **Fixed recipient, subject and message**, set in the Worker settings. The screen shows them but has nothing to type. The Worker ignores anything else the browser sends, so it can only email that one address.
+- KamTech Solutions branding (same as Fill & Sign), light and dark themes
+- Test mode: until Gmail is set up, emails are prepared but not sent
 
-### What gets sent
-Set in `.env` (see `.env.example`):
-
-| Setting | Default | |
-|---|---|---|
-| `MAIL_TO` | `uzairkamal@yahoo.com` | the only address the app sends to |
-| `MAIL_SUBJECT` | `Invoice {date}` | `{date}` becomes e.g. `22 Nov 2026`, `{count}` the number of photos |
-| `MAIL_BODY` | `Hello, … Please find the invoice attached. …` | use `\n` for a new line |
-| `SEND_FORMAT` | `pdf` | or `image` for separate JPEGs |
-
-## Setup (Gmail)
+## Deploy to Cloudflare
 
 ### 1. Create a Gmail App Password
-Gmail does not let apps use your normal password. You create a separate **App Password** instead:
 1. Sign in to the Gmail account you want to send **from**.
 2. Turn on **2-Step Verification**: https://myaccount.google.com/signinoptions/twosv
-3. Open https://myaccount.google.com/apppasswords, type a name such as `InvoMail`, and click **Create**.
-4. Copy the 16-character password Google shows (e.g. `abcd efgh ijkl mnop`). You only see it once.
+3. Open https://myaccount.google.com/apppasswords, name it `InvoMail`, click **Create**, and copy the 16-character password.
 
-### 2. Configure and start the app
+### 2. Create the Worker
+Either connect the GitHub repo in the Cloudflare dashboard (**Workers & Pages → Create → Import a repository**, build command empty, deploy command `npx wrangler deploy`), or deploy from your computer:
 ```bash
 npm install
-cp .env.example .env
+npx wrangler login
+npm run deploy
 ```
-Edit `.env`:
-```
-GMAIL_USER=yourname@gmail.com
-GMAIL_APP_PASSWORD=abcd efgh ijkl mnop
-```
-Then:
+
+### 3. Enter the settings
+Cloudflare dashboard → **Workers & Pages → invomail → Settings → Variables and Secrets → Add**:
+
+| Name | Type | Value |
+|---|---|---|
+| `GMAIL_USER` | Text | the Gmail address it sends from |
+| `GMAIL_APP_PASSWORD` | **Secret** | the 16-character App Password |
+| `MAIL_TO` | Text | `uzairkamal@yahoo.com` |
+| `MAIL_SUBJECT` | Text | `Invoice {date}` *(optional; this is the default)* |
+| `MAIL_BODY` | Text | e.g. `Hello,\n\nPlease find the invoice attached.\n\nKind regards` *(optional)* |
+| `SEND_FORMAT` | Text | `pdf` (default) or `image` *(optional)* |
+| `TIME_ZONE` | Text | for `{date}`, e.g. `Europe/Brussels` *(optional; default UTC)* |
+| `FROM_NAME` | Text | sender name shown in the inbox *(optional; default InvoMail)* |
+
+`{date}` becomes e.g. `22 Nov 2026`, `{count}` the number of photos, and `\n` starts a new line. Saving the settings redeploys the Worker; deploys keep them (`keep_vars` in `wrangler.jsonc`).
+
+Open the Worker's URL (or add your own domain under **Settings → Domains & Routes**). The camera needs HTTPS, which Cloudflare provides.
+
+## Try it locally
 ```bash
-npm start      # opens on http://localhost:3000
+npm install
+cp .dev.vars.example .dev.vars   # local settings; DRY_RUN=true means nothing is really sent
+npm run dev                      # http://localhost:8787
 ```
-On startup the terminal shows either `Email login OK` or `Email login FAILED` with the reason, so you know right away whether Gmail accepted the password.
 
-Keep `.env` private. It is in `.gitignore` so it is never committed.
-
-### Other providers
-Leave `GMAIL_USER` empty and fill in the `SMTP_*` lines in `.env` instead (e.g. Yahoo: `smtp.mail.yahoo.com`, port 465; Outlook: `smtp.office365.com`, port 587, `SMTP_SECURE=false`).
-
-## Using it on a phone
-Browsers only allow the live camera on **HTTPS** or `localhost`. On a phone, either:
-- deploy it somewhere with HTTPS (Render, Railway, Fly.io, a VPS behind Caddy/Nginx), or
-- use the **Upload** button, which opens the phone's camera app even over plain HTTP.
-
-## API
-`POST /api/send` (multipart/form-data): `photos` (1–10 JPEG/PNG files). Recipient, subject, message and format come from `.env` only.
+## Files
+- `public/` – the app (HTML, CSS, JS, KamTech logo, and the Cropper.js and jsPDF libraries in `public/vendor/`)
+- `src/worker.js` – the Worker: `GET /api/config` shows the fixed settings, `POST /api/send` emails the attachment(s)
+- `wrangler.jsonc` – Cloudflare configuration

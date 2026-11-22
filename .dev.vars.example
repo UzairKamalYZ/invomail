@@ -1,0 +1,11 @@
+# Copy to .dev.vars for local testing with `npm run dev` (never commit .dev.vars).
+# In production, set these in the Cloudflare dashboard instead:
+# Worker → Settings → Variables and Secrets.
+MAIL_TO=uzairkamal@yahoo.com
+MAIL_SUBJECT="Invoice {date}"
+MAIL_BODY="Hello,\n\nPlease find the invoice attached.\n\nKind regards"
+SEND_FORMAT=pdf
+TIME_ZONE=UTC
+GMAIL_USER=yourname@gmail.com
+GMAIL_APP_PASSWORD=abcd efgh ijkl mnop
+DRY_RUN=true

@@ -10,7 +10,7 @@
   <script>try{const t=localStorage.getItem('im-theme');if(t)document.documentElement.dataset.theme=t;}catch(e){}</script>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400..700&family=Manrope:wght@400..700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="vendor/cropperjs/cropper.min.css" />
+  <link rel="stylesheet" href="vendor/cropper.min.css" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -79,7 +79,7 @@
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg>
         <div>
           <h2 id="privacy-h">Your photos</h2>
-          <p>Cropping and editing happen in your browser. When you press Send, the photos go to the server only to build the PDF and send the email. They are not saved on the server afterwards.</p>
+          <p>Cropping and editing happen in your browser. When you press Send, the PDF is built on your device and handed to Gmail through a small Cloudflare Worker. Nothing is saved along the way.</p>
         </div>
       </section>
     </div>
@@ -118,7 +118,8 @@
   </div>
 
   <canvas id="canvas" hidden></canvas>
-  <script src="vendor/cropperjs/cropper.min.js"></script>
+  <script src="vendor/cropper.min.js"></script>
+  <script src="vendor/jspdf.umd.min.js"></script>
   <script src="editor.js"></script>
   <script src="app.js"></script>
 </body>

@@ -18,15 +18,17 @@
   const photos = []; // { original, blob, url, state }
   let stream = null;
   let facingMode = 'environment';
+  let sendFormat = 'pdf';
 
   fetch('/api/config')
     .then((r) => r.json())
     .then((cfg) => {
       document.getElementById('sumTo').textContent = cfg.to;
       document.getElementById('sumSubject').textContent = cfg.subject;
-      document.getElementById('sumFormat').textContent = cfg.format === 'image' ? 'Image (JPEG)' : 'PDF';
+      sendFormat = cfg.format === 'image' ? 'image' : 'pdf';
+      document.getElementById('sumFormat').textContent = sendFormat === 'image' ? 'Image (JPEG)' : 'PDF';
       document.getElementById('sumBody').textContent = cfg.body;
-      if (cfg.dryRun) setStatus('Server is in test mode: emails are logged, not actually sent.', '');
+      if (cfg.dryRun) setStatus('Test mode: add the Gmail settings to the Worker to send for real.', '');
     })
     .catch(() => {});
 
@@ -148,16 +150,45 @@
     fileInput.value = '';
   });
 
+  /** Build one A4 PDF in the browser: one photo per page, scaled to fit. */
+  async function buildPdf(blobs) {
+    const { jsPDF } = window.jspdf;
+    const margin = 28; // points (about 1 cm)
+    let doc = null;
+    for (const blob of blobs) {
+      const bmp = await createImageBitmap(blob);
+      const landscape = bmp.width > bmp.height;
+      bmp.close?.();
+      const orientation = landscape ? 'landscape' : 'portrait';
+      if (!doc) doc = new jsPDF({ unit: 'pt', format: 'a4', orientation, compress: true });
+      else doc.addPage('a4', orientation);
+      const pw = doc.internal.pageSize.getWidth();
+      const ph = doc.internal.pageSize.getHeight();
+      const bytes = new Uint8Array(await blob.arrayBuffer());
+      const { width, height } = doc.getImageProperties(bytes);
+      const scale = Math.min((pw - 2 * margin) / width, (ph - 2 * margin) / height);
+      const w = width * scale;
+      const h = height * scale;
+      doc.addImage(bytes, 'JPEG', (pw - w) / 2, (ph - h) / 2, w, h);
+    }
+    return doc.output('blob');
+  }
+
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     if (!photos.length) return setStatus('Take a photo first.', 'err');
 
-    const data = new FormData();
-    photos.forEach((p, i) => data.append('photos', p.blob, `photo-${i + 1}.jpg`));
-
     sendBtn.disabled = true;
-    setStatus('Sending…', '');
     try {
+      const data = new FormData();
+      data.append('count', String(photos.length));
+      if (sendFormat === 'pdf') {
+        setStatus('Making the PDF…', '');
+        data.append('files', await buildPdf(photos.map((p) => p.blob)), 'invoice.pdf');
+      } else {
+        photos.forEach((p, i) => data.append('files', p.blob, `photo-${i + 1}.jpg`));
+      }
+      setStatus('Sending…', '');
       const res = await fetch('/api/send', { method: 'POST', body: data });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json.error || `Server error (${res.status})`);
