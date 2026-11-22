@@ -30,7 +30,7 @@
   <main class="app">
     <div class="intro">
       <h2>Snap it, send it</h2>
-      <p>Take a photo of an invoice or document and email it as a PDF or image.</p>
+      <p>Take a photo of an invoice, or upload one, then press Send email.</p>
     </div>
 
     <section class="card" aria-labelledby="photo-h">
@@ -51,24 +51,17 @@
     </section>
 
     <form id="mailForm" class="card" aria-labelledby="mail-h">
-      <h3 id="mail-h" class="step"><span>2</span> Write the email</h3>
-      <label>To
-        <input id="to" name="to" type="email" required />
-      </label>
-      <label>Subject
-        <input id="subject" name="subject" type="text" value="Photo from InvoMail" maxlength="200" />
-      </label>
-      <label>Message
-        <textarea id="body" name="body" rows="5" placeholder="Write the email body here…"></textarea>
-      </label>
-      <fieldset class="format">
-        <legend>Send as</legend>
-        <div class="seg">
-          <label><input type="radio" name="format" value="pdf" checked /><span>PDF</span></label>
-          <label><input type="radio" name="format" value="image" /><span>Image (JPEG)</span></label>
-        </div>
-      </fieldset>
-      <button id="sendBtn" class="btn main wide" type="submit" disabled><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M21 3L10 14M21 3l-7 18-4-7-7-4z"/></svg>Send email</button>
+      <h3 id="mail-h" class="step"><span>2</span> Send</h3>
+      <dl class="summary">
+        <div><dt>To</dt><dd id="sumTo">…</dd></div>
+        <div><dt>Subject</dt><dd id="sumSubject">…</dd></div>
+        <div><dt>Attached as</dt><dd id="sumFormat">…</dd></div>
+      </dl>
+      <details class="preview">
+        <summary>Show message</summary>
+        <pre id="sumBody"></pre>
+      </details>
+      <button id="sendBtn" class="btn main wide big" type="submit" disabled><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M21 3L10 14M21 3l-7 18-4-7-7-4z"/></svg>Send email</button>
       <p id="status" class="status" role="status"></p>
     </form>
   </main>
@@ -86,7 +79,7 @@
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg>
         <div>
           <h2 id="privacy-h">Your photos</h2>
-          <p>Cropping and editing happen in your browser. When you press Send, the photos go to our server only to build the PDF and send the email. They are not saved on the server afterwards.</p>
+          <p>Cropping and editing happen in your browser. When you press Send, the photos go to the server only to build the PDF and send the email. They are not saved on the server afterwards.</p>
         </div>
       </section>
     </div>

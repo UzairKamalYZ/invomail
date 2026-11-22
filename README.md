@@ -1,18 +1,25 @@
 # InvoMail
 
-A small web app that takes a picture with your camera and emails it as a **PDF** or **image**, with your own message in the email body.
-
-Default recipient: `uzairkamal@yahoo.com` (change it with `DEFAULT_TO` in `.env`, or edit the "To" field in the app).
+A personal one-button app: take a photo of an invoice (or upload one) and press **Send email**. It goes to one fixed address with a pre-written subject and message, attached as a PDF.
 
 ## Features
-- Live camera preview with **Take photo** and **Switch camera** (front/back on phones)
-- **Upload** button: opens the phone camera or picks existing photos (also the fallback when live camera is blocked)
-- Several photos per email (up to 10); remove any before sending
-- **Photo editor** (tap a photo): crop (free, A4, square, or full photo), rotate left/right, flip, brightness and contrast, and B&W or **Document** looks that make paperwork crisp and easy to read. Edits are applied to the original photo, so you can reopen and change them without losing quality. Reset undoes everything.
-- Send as one multi-page **PDF** (one photo per A4 page) or as separate **JPEG** attachments
-- Editable To, Subject and Message
-- Styled with the KamTech Solutions brand, the same as Fill & Sign (pdf.kamtechsolutions.eu): Indigo Edge colours, Sora and Manrope fonts, KamTech logo and icons. Light and dark themes follow your device setting, with a switch in the header.
-- Test mode: if SMTP isn't set up, emails are logged instead of sent
+- Live camera preview with **Take photo** and **Switch** (front/back camera on phones)
+- **Upload** button: opens the phone camera or picks existing photos (also the fallback when the live camera is blocked)
+- Several photos per email (up to 10), sent as one multi-page **PDF** (one photo per A4 page) or as separate JPEGs
+- **Photo editor** (tap a photo, optional): crop (free, A4, square, or full photo), rotate, flip, brightness and contrast, and B&W or **Document** looks that make paperwork crisp. Edits are applied to the original photo, so you can reopen and change them without losing quality.
+- **Fixed recipient, subject and message**, set once in `.env`. The screen shows them but has nothing to type. The server ignores anything else the browser sends, so the app can only ever email that one address.
+- Styled with the KamTech Solutions brand, the same as Fill & Sign (pdf.kamtechsolutions.eu). Light and dark themes follow your device, with a switch in the header.
+- Test mode: if no email account is set up, emails are logged instead of sent
+
+### What gets sent
+Set in `.env` (see `.env.example`):
+
+| Setting | Default | |
+|---|---|---|
+| `MAIL_TO` | `uzairkamal@yahoo.com` | the only address the app sends to |
+| `MAIL_SUBJECT` | `Invoice {date}` | `{date}` becomes e.g. `22 Nov 2026`, `{count}` the number of photos |
+| `MAIL_BODY` | `Hello, … Please find the invoice attached. …` | use `\n` for a new line |
+| `SEND_FORMAT` | `pdf` | or `image` for separate JPEGs |
 
 ## Setup (Gmail)
 
@@ -32,7 +39,6 @@ Edit `.env`:
 ```
 GMAIL_USER=yourname@gmail.com
 GMAIL_APP_PASSWORD=abcd efgh ijkl mnop
-DEFAULT_TO=uzairkamal@yahoo.com
 ```
 Then:
 ```bash
@@ -51,4 +57,4 @@ Browsers only allow the live camera on **HTTPS** or `localhost`. On a phone, eit
 - use the **Upload** button, which opens the phone's camera app even over plain HTTP.
 
 ## API
-`POST /api/send` (multipart/form-data): `photos` (1–10 JPEG/PNG files), `to`, `subject`, `body`, `format` (`pdf` or `image`).
+`POST /api/send` (multipart/form-data): `photos` (1–10 JPEG/PNG files). Recipient, subject, message and format come from `.env` only.

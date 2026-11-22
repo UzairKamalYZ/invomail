@@ -12,7 +12,6 @@
   const form = document.getElementById('mailForm');
   const sendBtn = document.getElementById('sendBtn');
   const statusEl = document.getElementById('status');
-  const toInput = document.getElementById('to');
   const editHint = document.getElementById('editHint');
 
   // original: photo as taken; blob: what gets sent (edited or original); state: editor settings
@@ -23,7 +22,10 @@
   fetch('/api/config')
     .then((r) => r.json())
     .then((cfg) => {
-      if (!toInput.value) toInput.value = cfg.defaultTo;
+      document.getElementById('sumTo').textContent = cfg.to;
+      document.getElementById('sumSubject').textContent = cfg.subject;
+      document.getElementById('sumFormat').textContent = cfg.format === 'image' ? 'Image (JPEG)' : 'PDF';
+      document.getElementById('sumBody').textContent = cfg.body;
       if (cfg.dryRun) setStatus('Server is in test mode: emails are logged, not actually sent.', '');
     })
     .catch(() => {});
@@ -150,7 +152,7 @@
     e.preventDefault();
     if (!photos.length) return setStatus('Take a photo first.', 'err');
 
-    const data = new FormData(form);
+    const data = new FormData();
     photos.forEach((p, i) => data.append('photos', p.blob, `photo-${i + 1}.jpg`));
 
     sendBtn.disabled = true;
@@ -162,7 +164,7 @@
       setStatus(
         json.dryRun
           ? `Test mode: email to ${json.to} was prepared but not sent.`
-          : `Email sent to ${json.to}.`,
+          : `Sent to ${json.to}. Ready for the next invoice.`,
         'ok'
       );
       photos.forEach((p) => URL.revokeObjectURL(p.url));

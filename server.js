@@ -7,7 +7,12 @@ const nodemailer = require('nodemailer');
 const PDFDocument = require('pdfkit');
 
 const PORT = Number(process.env.PORT) || 3000;
-const DEFAULT_TO = process.env.DEFAULT_TO || 'uzairkamal@yahoo.com';
+// Everything about the email is fixed here (from .env); the browser only sends the photos.
+const MAIL_TO = (process.env.MAIL_TO || process.env.DEFAULT_TO || 'uzairkamal@yahoo.com').trim();
+const MAIL_SUBJECT = process.env.MAIL_SUBJECT || 'Invoice {date}';
+const MAIL_BODY =
+  process.env.MAIL_BODY || 'Hello,\n\nPlease find the invoice attached.\n\nKind regards';
+const SEND_FORMAT = String(process.env.SEND_FORMAT).toLowerCase() === 'image' ? 'image' : 'pdf';
 // Gmail shortcut: GMAIL_USER + GMAIL_APP_PASSWORD fill in the SMTP settings.
 const GMAIL_USER = (process.env.GMAIL_USER || '').trim();
 const GMAIL_PASS = (process.env.GMAIL_APP_PASSWORD || '').replace(/\s+/g, ''); // Google shows it in groups of 4
@@ -82,6 +87,12 @@ function imagesToPdf(files) {
   });
 }
 
+/** Fill in {date} and {count} in the subject or message. */
+function fill(template, count) {
+  const date = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+  return template.replace(/\\n/g, '\n').replace(/\{date\}/g, date).replace(/\{count\}/g, String(count));
+}
+
 function stamp() {
   return new Date().toISOString().replace(/[:T]/g, '-').slice(0, 19);
 }
@@ -91,30 +102,36 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/vendor/cropperjs', express.static(path.join(__dirname, 'node_modules/cropperjs/dist')));
 
 app.get('/api/config', (_req, res) => {
-  res.json({ defaultTo: DEFAULT_TO, dryRun: DRY_RUN });
+  res.json({
+    to: MAIL_TO,
+    subject: fill(MAIL_SUBJECT, 1),
+    body: fill(MAIL_BODY, 1),
+    format: SEND_FORMAT,
+    dryRun: DRY_RUN,
+  });
 });
 
 app.post('/api/send', upload.array('photos', MAX_PHOTOS), async (req, res) => {
   try {
     const files = req.files || [];
-    const to = String(req.body.to || DEFAULT_TO).trim();
-    const subject = String(req.body.subject || 'Photo from InvoMail').trim().slice(0, 200);
-    const body = String(req.body.body || '').slice(0, 10000);
-    const format = req.body.format === 'image' ? 'image' : 'pdf';
+    // Recipient, subject, message and format come only from the server settings.
+    const to = MAIL_TO;
+    const subject = fill(MAIL_SUBJECT, files.length);
+    const body = fill(MAIL_BODY, files.length);
+    const format = SEND_FORMAT;
 
-    if (!files.length) return res.status(400).json({ error: 'Please take at least one photo.' });
-    if (!EMAIL_RE.test(to)) return res.status(400).json({ error: 'Recipient email address is not valid.' });
+    if (!files.length) return res.status(400).json({ error: 'Please take or upload a photo first.' });
 
     const id = stamp();
     let attachments;
     if (format === 'pdf') {
       attachments = [
-        { filename: `photo-${id}.pdf`, content: await imagesToPdf(files), contentType: 'application/pdf' },
+        { filename: `invoice-${id}.pdf`, content: await imagesToPdf(files), contentType: 'application/pdf' },
       ];
     } else {
       attachments = files.map((f, i) => {
         const ext = f.mimetype === 'image/png' ? 'png' : 'jpg';
-        return { filename: `photo-${id}-${i + 1}.${ext}`, content: f.buffer, contentType: f.mimetype };
+        return { filename: `invoice-${id}-${i + 1}.${ext}`, content: f.buffer, contentType: f.mimetype };
       });
     }
 
@@ -122,7 +139,7 @@ app.post('/api/send', upload.array('photos', MAX_PHOTOS), async (req, res) => {
       from: MAIL_FROM,
       to,
       subject,
-      text: body || 'Please find the attached photo(s).',
+      text: body,
       attachments,
     });
 
@@ -149,8 +166,14 @@ app.use((err, _req, res, _next) => {
   res.status(400).json({ error: err.message || 'Bad request' });
 });
 
+if (!EMAIL_RE.test(MAIL_TO)) {
+  console.error(`MAIL_TO is not a valid email address: "${MAIL_TO}". Fix it in .env.`);
+  process.exit(1);
+}
+
 app.listen(PORT, () => {
   console.log(`InvoMail running at http://localhost:${PORT}`);
+  console.log(`Every email goes to ${MAIL_TO} as ${SEND_FORMAT.toUpperCase()}.`);
   if (DRY_RUN) {
     console.log('TEST MODE: emails are logged, not sent. Set GMAIL_USER and GMAIL_APP_PASSWORD in .env to send for real.');
     return;
