@@ -54,13 +54,15 @@
       <h3 id="mail-h" class="step"><span>2</span> Send</h3>
       <dl class="summary">
         <div><dt>To</dt><dd id="sumTo">…</dd></div>
-        <div><dt>Subject</dt><dd id="sumSubject">…</dd></div>
         <div><dt>Attached as</dt><dd id="sumFormat">…</dd></div>
       </dl>
-      <details class="preview">
-        <summary>Show message</summary>
-        <pre id="sumBody"></pre>
-      </details>
+      <label class="field">Subject
+        <input id="subject" name="subject" type="text" maxlength="200" autocomplete="off" />
+      </label>
+      <label class="field">Message
+        <textarea id="body" name="body" rows="6" maxlength="10000"></textarea>
+      </label>
+      <button id="resetText" class="linkbtn" type="button" hidden>Reset subject and message to the default text</button>
       <button id="sendBtn" class="btn main wide big" type="submit" disabled><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M21 3L10 14M21 3l-7 18-4-7-7-4z"/></svg>Send email</button>
       <p id="status" class="status" role="status"></p>
     </form>

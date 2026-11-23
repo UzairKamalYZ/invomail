@@ -23,15 +23,30 @@
   let stream = null;
   let facingMode = 'environment';
   let sendFormat = 'pdf';
+  const subjectEl = document.getElementById('subject');
+  const bodyEl = document.getElementById('body');
+  const resetText = document.getElementById('resetText');
+  const defaults = { subject: '', body: '' };
+
+  function fillDefaults() {
+    subjectEl.value = defaults.subject;
+    bodyEl.value = defaults.body;
+    resetText.hidden = true;
+  }
+  const edited = () => subjectEl.value !== defaults.subject || bodyEl.value !== defaults.body;
+  subjectEl.addEventListener('input', () => (resetText.hidden = !edited()));
+  bodyEl.addEventListener('input', () => (resetText.hidden = !edited()));
+  resetText.addEventListener('click', fillDefaults);
 
   fetch('/api/config')
     .then((r) => r.json())
     .then((cfg) => {
       document.getElementById('sumTo').textContent = cfg.to;
-      document.getElementById('sumSubject').textContent = cfg.subject;
       sendFormat = cfg.format === 'image' ? 'image' : 'pdf';
       document.getElementById('sumFormat').textContent = sendFormat === 'image' ? 'Image (JPEG)' : 'PDF';
-      document.getElementById('sumBody').textContent = cfg.body;
+      defaults.subject = cfg.subject;
+      defaults.body = cfg.body;
+      fillDefaults();
       if (cfg.dryRun) setStatus('Test mode: add the Gmail settings to the Worker to send for real.', '');
     })
     .catch(() => {});
@@ -236,6 +251,9 @@
     try {
       const data = new FormData();
       data.append('count', String(itemCount()));
+      // Only send the text if it was changed; otherwise the Worker fills in its default.
+      if (subjectEl.value !== defaults.subject) data.append('subject', subjectEl.value);
+      if (bodyEl.value !== defaults.body) data.append('body', bodyEl.value);
       if (photos.length && sendFormat === 'pdf') {
         setStatus('Making the PDF…', '');
         data.append('files', await buildPdf(photos.map((p) => p.blob)), 'invoice.pdf');
@@ -258,6 +276,7 @@
       photos.length = 0;
       pdfs.length = 0;
       renderThumbs();
+      fillDefaults(); // the next invoice starts from the default text again
     } catch (err) {
       setStatus(err.message, 'err');
       sendBtn.disabled = itemCount() === 0;

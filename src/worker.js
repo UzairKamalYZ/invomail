@@ -11,8 +11,8 @@
  *   TIME_ZONE           for {date}, e.g. "Europe/Brussels" (default UTC)   (text, optional)
  *   DRY_RUN             "true" to build emails without sending              (text, optional)
  *
- * The browser only sends the attachment(s). Recipient, subject and message come from
- * these settings, so the Worker can never be used to email anyone else.
+ * The browser sends the attachment(s) and, if you edited them, the subject and message.
+ * The recipient always comes from MAIL_TO, so the Worker can never email anyone else.
  */
 import { WorkerMailer } from 'worker-mailer';
 
@@ -141,17 +141,20 @@ async function handleSend(request, env) {
 
   // Photos count for {count}: the browser tells us how many went into the PDF.
   const count = Math.max(1, Math.min(MAX_FILES, parseInt(form.get('count'), 10) || files.length));
+  // Subject and message may be edited per invoice in the app; the recipient never can.
+  const customSubject = String(form.get('subject') ?? '').replace(/[\r\n]+/g, ' ').trim().slice(0, 200);
+  const customBody = String(form.get('body') ?? '').replace(/\r\n?/g, '\n').slice(0, 10000);
   const email = {
     from: { name: env.FROM_NAME || 'InvoMail', email: s.user || 'invomail@example.com' },
     to: s.to,
-    subject: s.subject(count),
-    text: s.body(count),
+    subject: customSubject || s.subject(count),
+    text: customBody.trim() ? customBody : s.body(count),
     attachments,
   };
   const names = attachments.map((a) => a.filename);
 
   if (s.dryRun) {
-    console.log(`[DRY RUN] Would send "${email.subject}" to ${s.to} with ${names.join(', ')}`);
+    console.log(`[DRY RUN] Would send "${email.subject}" to ${s.to} with ${names.join(', ')}\n---\n${email.text}\n---`);
     return json({ ok: true, dryRun: true, to: s.to, attachments: names });
   }
 

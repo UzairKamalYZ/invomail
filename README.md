@@ -1,6 +1,6 @@
 # InvoMail
 
-A personal one-button app: take a photo of an invoice (or upload a photo or PDF) and press **Send email**. It goes to one fixed address, with a pre-written subject and message, as a PDF.
+A personal one-button app: take a photo of an invoice (or upload a photo or PDF) and press **Send email**. It goes to one fixed address as a PDF, with a pre-filled subject and message you can change if needed.
 
 There is no server to run. The app is plain files, and everything happens in the browser, including building the PDF. A tiny [Cloudflare Worker](https://developers.cloudflare.com/workers/) (`src/worker.js`) serves those files and does the one thing a browser can't do safely: hand the PDF to Gmail using your password, which stays in the Worker's settings and never reaches the browser.
 
@@ -9,7 +9,8 @@ There is no server to run. The app is plain files, and everything happens in the
 - Several photos per email (up to 10), combined into one PDF in the browser (one photo per A4 page, portrait or landscape to fit)
 - **Upload PDFs** too: they are attached exactly as they are, under their own file name, next to the PDF made from your photos
 - **Photo editor** (tap a photo, optional): crop (free, A4, square, full photo), rotate, flip, brightness, contrast, and B&W or **Document** looks
-- **Fixed recipient, subject and message**, set in the Worker settings. The screen shows them but has nothing to type. The Worker ignores anything else the browser sends, so it can only email that one address.
+- **Fixed recipient**, set in the Worker settings: the Worker ignores any other address, so it can only email that one.
+- **Subject and message come pre-filled** from the Worker settings but can be edited for a particular invoice (e.g. adding a note). After sending they go back to the default text, and a link resets them at any time.
 - KamTech Solutions branding (same as Fill & Sign), light and dark themes
 - Test mode: until Gmail is set up, emails are prepared but not sent
 
