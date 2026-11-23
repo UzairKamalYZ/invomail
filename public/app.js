@@ -1,6 +1,7 @@
 (() => {
   const MAX_DIM = 2000; // longest side of the saved photo, in pixels
-  const MAX_PHOTOS = 10;
+  const MAX_ITEMS = 10; // photos + PDFs per email
+  const MAX_PDF_BYTES = 15 * 1024 * 1024;
 
   const video = document.getElementById('video');
   const canvas = document.getElementById('canvas');
@@ -16,6 +17,9 @@
 
   // original: photo as taken; blob: what gets sent (edited or original); state: editor settings
   const photos = []; // { original, blob, url, state }
+  // Uploaded PDFs are sent exactly as they are.
+  const pdfs = []; // { file }
+  const itemCount = () => photos.length + pdfs.length;
   let stream = null;
   let facingMode = 'environment';
   let sendFormat = 'pdf';
@@ -77,8 +81,8 @@
   }
 
   function addPhoto(blob) {
-    if (photos.length >= MAX_PHOTOS) {
-      setStatus(`You can attach up to ${MAX_PHOTOS} photos.`, 'err');
+    if (itemCount() >= MAX_ITEMS) {
+      setStatus(`You can attach up to ${MAX_ITEMS} photos or PDFs.`, 'err');
       return;
     }
     photos.push({ original: blob, blob, url: URL.createObjectURL(blob), state: null });
@@ -113,8 +117,54 @@
       }
       thumbs.append(wrap);
     });
-    sendBtn.disabled = photos.length === 0;
+    pdfs.forEach((d, i) => {
+      const wrap = document.createElement('div');
+      wrap.className = 'thumb pdf';
+      wrap.title = d.file.name;
+      wrap.innerHTML =
+        '<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M6 2h8l5 5v15H6z"/><path d="M14 2v5h5"/></svg><b>PDF</b>';
+      const name = document.createElement('span');
+      name.className = 'name';
+      name.textContent = d.file.name;
+      const del = document.createElement('button');
+      del.type = 'button';
+      del.textContent = '×';
+      del.title = 'Remove';
+      del.onclick = () => {
+        pdfs.splice(i, 1);
+        renderThumbs();
+      };
+      wrap.append(name, del);
+      thumbs.append(wrap);
+    });
+    sendBtn.disabled = itemCount() === 0;
     editHint.hidden = photos.length === 0;
+  }
+
+  function isPdf(file) {
+    return file.type === 'application/pdf' || /\.pdf$/i.test(file.name);
+  }
+
+  async function addPdf(file) {
+    if (itemCount() >= MAX_ITEMS) {
+      setStatus(`You can attach up to ${MAX_ITEMS} photos or PDFs.`, 'err');
+      return;
+    }
+    if (file.size > MAX_PDF_BYTES) {
+      setStatus(`"${file.name}" is too large (max 15 MB).`, 'err');
+      return;
+    }
+    const head = new TextDecoder().decode(await file.slice(0, 5).arrayBuffer());
+    if (head !== '%PDF-') {
+      setStatus(`"${file.name}" is not a valid PDF.`, 'err');
+      return;
+    }
+    if (pdfs.some((d) => d.file.name === file.name && d.file.size === file.size)) {
+      setStatus(`"${file.name}" is already added.`, 'err');
+      return;
+    }
+    pdfs.push({ file });
+    renderThumbs();
   }
 
   async function editPhoto(p) {
@@ -139,12 +189,16 @@
 
   fileInput.addEventListener('change', async () => {
     for (const file of fileInput.files) {
+      if (isPdf(file)) {
+        await addPdf(file);
+        continue;
+      }
       try {
         const bmp = await createImageBitmap(file);
         addPhoto(await toJpeg(bmp, bmp.width, bmp.height));
         bmp.close?.();
       } catch {
-        setStatus(`Could not read "${file.name}". Try a JPEG or PNG.`, 'err');
+        setStatus(`Could not read "${file.name}". Try a photo (JPEG or PNG) or a PDF.`, 'err');
       }
     }
     fileInput.value = '';
@@ -176,18 +230,20 @@
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    if (!photos.length) return setStatus('Take a photo first.', 'err');
+    if (!itemCount()) return setStatus('Take a photo or upload a file first.', 'err');
 
     sendBtn.disabled = true;
     try {
       const data = new FormData();
-      data.append('count', String(photos.length));
-      if (sendFormat === 'pdf') {
+      data.append('count', String(itemCount()));
+      if (photos.length && sendFormat === 'pdf') {
         setStatus('Making the PDF…', '');
         data.append('files', await buildPdf(photos.map((p) => p.blob)), 'invoice.pdf');
       } else {
         photos.forEach((p, i) => data.append('files', p.blob, `photo-${i + 1}.jpg`));
       }
+      // Some phones give PDFs no type; label them so the Worker accepts them.
+      pdfs.forEach((d) => data.append('files', new File([d.file], d.file.name, { type: 'application/pdf' })));
       setStatus('Sending…', '');
       const res = await fetch('/api/send', { method: 'POST', body: data });
       const json = await res.json().catch(() => ({}));
@@ -200,10 +256,11 @@
       );
       photos.forEach((p) => URL.revokeObjectURL(p.url));
       photos.length = 0;
+      pdfs.length = 0;
       renderThumbs();
     } catch (err) {
       setStatus(err.message, 'err');
-      sendBtn.disabled = photos.length === 0;
+      sendBtn.disabled = itemCount() === 0;
     }
   });
 

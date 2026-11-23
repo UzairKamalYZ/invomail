@@ -72,6 +72,9 @@ video{width:100%;height:100%;object-fit:cover;display:block}
 .thumb img:hover{outline:2px solid var(--brand);outline-offset:1px}
 .thumb button{position:absolute;top:4px;right:4px;padding:0;width:26px;height:26px;border-radius:50%;background:oklch(.585 .233 277);color:#fff;border:0;line-height:1;cursor:pointer}
 .thumb .edited{position:absolute;left:4px;bottom:4px;font-size:11px;font-weight:600;padding:1px 7px;border-radius:999px;background:var(--brand);color:var(--brand-fg)}
+.thumb.pdf{aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--brand-soft);color:var(--brand);text-align:center}
+.thumb.pdf b{font-family:var(--display);font-size:13px}
+.thumb.pdf .name{width:100%;font-size:11px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .hint{margin:10px 0 0;font-size:13px;color:var(--mute)}
 
 /* ---------- Form ---------- */

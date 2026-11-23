@@ -55,6 +55,32 @@ function stamp(timeZone) {
   return `${p.year}-${p.month}-${p.day}-${p.hour}${p.minute}${p.second}`;
 }
 
+// Names the app gives to the files it creates itself.
+const GENERATED_NAME = /^(invoice\.pdf|photo-\d+\.jpg)$/;
+
+/** Check the first bytes, so a renamed file can't pass as a PDF or JPEG. */
+function looksLike(ext, head) {
+  if (ext === 'pdf') return String.fromCharCode(...head) === '%PDF-';
+  return head[0] === 0xff && head[1] === 0xd8;
+}
+
+/** Keep an uploaded file's name, minus anything odd, e.g. "INV 2026/04.pdf" -> "INV_2026_04.pdf". */
+function safeName(name, ext) {
+  const base = String(name || '')
+    .replace(/\.[^.]*$/, '')
+    .replace(/[^\p{L}\p{N}._ -]+/gu, '_')
+    .trim()
+    .slice(0, 80);
+  return base ? `${base}.${ext}` : null;
+}
+
+function unique(name, used) {
+  let out = name;
+  for (let n = 2; used.has(out.toLowerCase()); n++) out = name.replace(/(\.[^.]+)$/, `-${n}$1`);
+  used.add(out.toLowerCase());
+  return out;
+}
+
 function toBase64(buffer) {
   const bytes = new Uint8Array(buffer);
   let binary = '';
@@ -97,11 +123,20 @@ async function handleSend(request, env) {
 
   const id = stamp(s.timeZone);
   const attachments = [];
-  for (const [i, f] of files.entries()) {
+  const used = new Set();
+  let generated = 0;
+  for (const f of files) {
     const ext = ALLOWED_TYPES[f.type];
     if (!ext) return json({ error: 'Only PDF or JPEG files can be sent.' }, 400);
-    const suffix = files.length > 1 ? `-${i + 1}` : '';
-    attachments.push({ filename: `invoice-${id}${suffix}.${ext}`, content: toBase64(await f.arrayBuffer()), mimeType: f.type });
+    const buf = await f.arrayBuffer();
+    if (!looksLike(ext, new Uint8Array(buf, 0, Math.min(5, buf.byteLength)))) {
+      return json({ error: `"${f.name}" is not a valid ${ext.toUpperCase()} file.` }, 400);
+    }
+    // The app's own PDF/photos get a dated name; uploaded PDFs keep their own name.
+    let name = GENERATED_NAME.test(f.name) ? null : safeName(f.name, ext);
+    if (!name) name = `invoice-${id}${++generated > 1 ? `-${generated}` : ''}.${ext}`;
+    name = unique(name, used);
+    attachments.push({ filename: name, content: toBase64(buf), mimeType: f.type });
   }
 
   // Photos count for {count}: the browser tells us how many went into the PDF.

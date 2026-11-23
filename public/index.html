@@ -30,11 +30,11 @@
   <main class="app">
     <div class="intro">
       <h2>Snap it, send it</h2>
-      <p>Take a photo of an invoice, or upload one, then press Send email.</p>
+      <p>Take a photo of an invoice, or upload a photo or PDF, then press Send email.</p>
     </div>
 
     <section class="card" aria-labelledby="photo-h">
-      <h3 id="photo-h" class="step"><span>1</span> Take a photo</h3>
+      <h3 id="photo-h" class="step"><span>1</span> Add the invoice</h3>
       <div class="viewer">
         <video id="video" autoplay playsinline muted></video>
         <div id="cameraMsg" class="camera-msg" hidden></div>
@@ -42,8 +42,8 @@
       <div class="row">
         <button id="captureBtn" class="btn main" type="button"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>Take photo</button>
         <button id="switchBtn" class="btn" type="button" title="Switch camera"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 0 1 14-5.3M20 12a8 8 0 0 1-14 5.3"/><path d="M18 3v4h-4M6 21v-4h4"/></svg>Switch</button>
-        <label class="btn" title="Choose a photo from your phone or computer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20h16M12 4v12M7 9l5-5 5 5"/></svg>Upload
-          <input id="fileInput" type="file" accept="image/*" multiple hidden />
+        <label class="btn" title="Choose a photo or PDF from your phone or computer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20h16M12 4v12M7 9l5-5 5 5"/></svg>Upload
+          <input id="fileInput" type="file" accept="image/*,application/pdf,.pdf" multiple hidden />
         </label>
       </div>
       <div id="thumbs" class="thumbs"></div>
